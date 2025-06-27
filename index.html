@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recipe Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter for general text, Poppins for headings -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base styles for premium dark theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            color: #c9d1d9; /* Light gray text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        #app-container {
+            background-color: #161b22; /* Slightly lighter dark for the main container */
+            border-radius: 2rem; /* More rounded */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); /* Stronger, deeper shadow */
+            padding: 3rem; /* Generous padding */
+            max-width: 90%;
+            width: 700px; /* Wider for better content display */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden; /* For inner content transitions */
+        }
+
+        /* Headings */
+        h1, h2 {
+            font-family: 'Poppins', sans-serif;
+            color: #58a6ff; /* Vibrant blue for headings */
+            font-weight: 700;
+        }
+        h1 {
+            font-size: 2.5rem; /* Larger main heading */
+            margin-bottom: 1.5rem;
+        }
+        h2 {
+            font-size: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #30363d; /* Subtle underline */
+            padding-bottom: 0.5rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Drag and Drop Area */
+        #drop-area {
+            border: 3px dashed #30363d; /* Dark dashed border */
+            background-color: #21262d; /* Slightly lighter dark background */
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+        #drop-area.highlight {
+            border-color: #58a6ff; /* Highlight color on drag over */
+            background-color: #2b3340; /* Lighter background */
+        }
+        #drop-area i {
+            color: #8b949e; /* Muted icon color */
+        }
+        #drop-area:hover {
+            border-color: #8b949e;
+        }
+
+        /* File Input Button */
+        .custom-file-input {
+            background-color: #238636; /* GitHub-like green button */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .custom-file-input:hover {
+            background-color: #2ea043;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(35, 134, 54, 0.4);
+        }
+        .custom-file-input:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 10px rgba(35, 134, 54, 0.2);
+        }
+
+        /* Image Preview */
+        #image-preview-container {
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 2px solid #30363d;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease-in-out;
+        }
+        #image-preview {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* General Buttons (Generate, Clear) */
+        .btn-action {
+            background-color: #58a6ff; /* Blue for actions */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(88, 166, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-action:hover {
+            background-color: #79c0ff;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.4);
+        }
+        .btn-action:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 10px rgba(88, 166, 255, 0.2);
+        }
+        .btn-action:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            background-color: #3e5e78; /* Muted blue when disabled */
+        }
+
+        .btn-clear {
+            background-color: #da3633; /* Red for clear */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(218, 54, 51, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-clear:hover {
+            background-color: #e6524f;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(218, 54, 51, 0.4);
+        }
+        .btn-clear:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 10px rgba(218, 54, 51, 0.2);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #58a6ff; /* Blue spinner color */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Recipe Display Area */
+        #recipe-display {
+            background-color: #21262d; /* Consistent dark background */
+            border: 1px solid #30363d;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: left;
+            word-wrap: break-word;
+            white-space: pre-wrap; /* Preserve formatting from AI */
+            overflow-y: auto; /* Scroll for long recipes */
+            max-height: 500px;
+            animation: fadeInScale 0.7s ease-out forwards;
+        }
+        #recipe-display h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            color: #58a6ff;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        #recipe-display ul, #recipe-display ol {
+            list-style-position: inside;
+            margin-bottom: 1rem;
+            padding-left: 1.5rem; /* Indent lists */
+        }
+        #recipe-display li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #app-container {
+                padding: 2rem;
+                width: 95%;
+                border-radius: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.75rem;
+            }
+            #drop-area {
+                padding: 1.5rem;
+            }
+            .btn-action, .btn-clear, .custom-file-input {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            #recipe-display {
+                padding: 1.5rem;
+                max-height: 400px;
+            }
+            #recipe-display h3 {
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #app-container {
+                padding: 1rem;
+                border-radius: 1rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .btn-group button {
+                width: 100%; /* Stack buttons on very small screens */
+                margin-top: 0.5rem;
+            }
+            .btn-group button:first-child {
+                margin-top: 0;
+            }
+            #image-preview-container {
+                width: 100%;
+                margin: 1rem 0;
+            }
+            #recipe-display {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-300 selection:text-blue-900">
+    <div id="app-container" class="space-y-8">
+        <h1 class="text-center">📸 AI Recipe Genius 🍲</h1>
+
+        <!-- Upload Section -->
+        <div id="upload-section" class="w-full space-y-6">
+            <div id="drop-area" class="w-full flex flex-col items-center justify-center p-8 border-dashed rounded-2xl cursor-pointer">
+                <i class="fas fa-cloud-upload-alt text-5xl mb-4"></i>
+                <p class="text-xl font-semibold mb-2">Drag & Drop Image Here</p>
+                <p class="text-gray-400 mb-4">or</p>
+                <input type="file" id="file-input" accept="image/*" class="hidden">
+                <label for="file-input" class="custom-file-input">
+                    <i class="fas fa-camera"></i>
+                    <span>Browse for a Picture</span>
+                </label>
+                <p id="file-name" class="text-sm text-gray-500 mt-3"></p>
+            </div>
+
+            <div id="image-preview-container" class="w-full hidden">
+                <img id="image-preview" src="#" alt="Image Preview" class="rounded-xl object-cover w-full h-auto">
+            </div>
+
+            <div id="action-buttons" class="w-full flex justify-center space-x-4">
+                <button id="generate-recipe-btn" class="btn-action" disabled>
+                    <i class="fas fa-bowl-food"></i>
+                    <span>Generate Recipe</span>
+                </button>
+                <button id="clear-btn" class="btn-clear" disabled>
+                    <i class="fas fa-trash-alt"></i>
+                    <span>Clear</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Section -->
+        <div id="loading-section" class="w-full flex flex-col items-center justify-center hidden my-8">
+            <div class="spinner mb-4"></div>
+            <p class="text-lg text-gray-400">Analyzing your dish... This might take a moment!</p>
+        </div>
+
+        <!-- Recipe Display Section -->
+        <div id="recipe-section" class="w-full hidden mt-8">
+            <h2 class="text-center mb-6">Your Delicious Recipe!</h2>
+            <div id="recipe-display" class="p-8 rounded-xl shadow-lg">
+                <p class="text-gray-300">Recipe content will appear here.</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <p id="error-message" class="text-red-400 text-center hidden mt-4"></p>
+    </div>
+
+    <script>
+        // --- API Key Configuration ---
+        const API_KEY = "AIzaSyAILkaF-UWfXacG0-l05TdXgScCHKbi00g"; // Using the provided API Key
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+        // --- DOM Elements ---
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const generateRecipeBtn = document.getElementById('generate-recipe-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const loadingSection = document.getElementById('loading-section');
+        const recipeSection = document.getElementById('recipe-section');
+        const recipeDisplay = document.getElementById('recipe-display');
+        const errorMessageDisplay = document.getElementById('error-message');
+        const uploadSection = document.getElementById('upload-section');
+
+        let uploadedImageBase64 = null; // Stores the Base64 representation of the image
+
+        // --- Event Listeners ---
+
+        // File Input Change
+        fileInput.addEventListener('change', handleFiles);
+
+        // Drag and Drop Events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        // Button Clicks
+        generateRecipeBtn.addEventListener('click', generateRecipe);
+        clearBtn.addEventListener('click', clearAll);
+
+        // --- Core Functions ---
+
+        /**
+         * Prevents default browser behavior for drag/drop events.
+         * @param {Event} e - The event object.
+         */
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        /**
+         * Adds highlight class to drop area on drag enter/over.
+         */
+        function highlight() {
+            dropArea.classList.add('highlight');
+        }
+
+        /**
+         * Removes highlight class from drop area on drag leave/drop.
+         */
+        function unhighlight() {
+            dropArea.classList.remove('highlight');
+        }
+
+        /**
+         * Handles files dropped onto the drop area.
+         * @param {Event} e - The drop event object.
+         */
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } }); // Simulate file input change event
+        }
+
+        /**
+         * Processes uploaded files (from input or drag/drop).
+         * @param {Event} event - The change event from file input or simulated event from drop.
+         */
+        function handleFiles(event) {
+            clearMessages();
+            const files = event.target.files;
+
+            if (files.length === 0) {
+                showError("No file selected.");
+                return;
+            }
+
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                showError("Please upload an image file (e.g., JPEG, PNG).");
+                return;
+            }
+
+            fileNameDisplay.textContent = file.name;
+            imagePreviewContainer.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                // Store Base64 string (remove the "data:image/jpeg;base64," part)
+                uploadedImageBase64 = e.target.result.split(',')[1];
+                generateRecipeBtn.disabled = false;
+                clearBtn.disabled = false;
+            };
+            reader.onerror = function() {
+                showError("Failed to read image file.");
+                clearAll();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Makes the API call to Gemini to get the recipe.
+         */
+        async function generateRecipe() {
+            if (!uploadedImageBase64) {
+                showError("Please upload an image first.");
+                return;
+            }
+
+            // Hide upload section, show loading
+            uploadSection.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+            recipeSection.classList.add('hidden'); // Hide previous recipe if any
+            clearMessages();
+
+            try {
+                const prompt = "Analyze this image of food and provide a detailed recipe for it. Include: 1. A suitable and appealing Recipe Name. 2. A clear list of Ingredients with approximate quantities. 3. Step-by-step Instructions. Format your response clearly using Markdown headings (# for Recipe Name, ## for Ingredients and Instructions, and bullet points/numbered lists for items).";
+
+                const payload = {
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inlineData: {
+                                        mimeType: "image/jpeg", // Assuming JPEG, but could be dynamic based on file.type
+                                        data: uploadedImageBase64
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: 0.7, // Adjust creativity
+                        topP: 0.95,
+                        topK: 40,
+                        maxOutputTokens: 1000 // Ensure enough tokens for a full recipe
+                    }
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorDetails = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorDetails.error?.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log("Gemini API Response:", result);
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const recipeText = result.candidates[0].content.parts[0].text;
+                    displayRecipe(recipeText);
+                } else {
+                    showError("Could not generate a recipe. The AI might not recognize the food or need more context. Please try another picture!");
+                }
+
+            } catch (error) {
+                console.error("Error generating recipe:", error);
+                showError(`Failed to generate recipe: ${error.message}. Please try again.`);
+            } finally {
+                loadingSection.classList.add('hidden');
+                recipeSection.classList.remove('hidden'); // Always show recipe section, even if empty/error
+            }
+        }
+
+        /**
+         * Displays the generated recipe text, attempting to format Markdown.
+         * @param {string} markdownText - The recipe text in Markdown.
+         */
+        function displayRecipe(markdownText) {
+            // Simple Markdown to HTML conversion (for headings, lists)
+            let htmlContent = markdownText
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>') // H3 for sub-headings like Ingredients/Instructions
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>') // H2 for section titles if any
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>'); // H1 for recipe name
+
+            // Convert bullet points
+            htmlContent = htmlContent.replace(/^\* (.*$)/gim, '<li>$1</li>');
+            htmlContent = htmlContent.replace(/^- (.*$)/gim, '<li>$1</li>');
+            htmlContent = htmlContent.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>'); // Wrap lists
+
+            // Convert numbered lists
+            htmlContent = htmlContent.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
+            htmlContent = htmlContent.replace(/(<li>.*<\/li>)/gms, '<ol>$1</ol>'); // Wrap lists
+
+            // Clean up multiple ul/ol if necessary (simple approach)
+            htmlContent = htmlContent.replace(/<\/ul>\s*<ul>/g, '');
+            htmlContent = htmlContent.replace(/<\/ol>\s*<ol>/g, '');
+
+            recipeDisplay.innerHTML = htmlContent;
+            recipeSection.classList.remove('hidden');
+            recipeSection.style.animation = 'fadeInScale 0.7s ease-out forwards'; // Re-apply animation
+        }
+
+
+        /**
+         * Clears all content and resets the app to initial state.
+         */
+        function clearAll() {
+            uploadedImageBase64 = null;
+            fileNameDisplay.textContent = '';
+            imagePreview.src = '#';
+            imagePreviewContainer.classList.add('hidden');
+            generateRecipeBtn.disabled = true;
+            clearBtn.disabled = true;
+
+            // Hide all dynamic sections
+            loadingSection.classList.add('hidden');
+            recipeSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            recipeDisplay.innerHTML = '<p class="text-gray-300">Recipe content will appear here.</p>'; // Reset placeholder
+            clearMessages();
+        }
+
+        /**
+         * Displays an error message.
+         * @param {string} message - The error message to display.
+         */
+        function showError(message) {
+            errorMessageDisplay.textContent = message;
+            errorMessageDisplay.classList.remove('hidden');
+        }
+
+        /**
+         * Clears any displayed error messages.
+         */
+        function clearMessages() {
+            errorMessageDisplay.classList.add('hidden');
+            errorMessageDisplay.textContent = '';
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            clearAll(); // Initialize the app state
+        });
+    </script>
+</body>
+</html>
